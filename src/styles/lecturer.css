@@ -1,0 +1,252 @@
+/* ── Lecturer View ── */
+.lecturer-page { min-height: 100vh; }
+
+.lecturer-main {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 1.75rem 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.lecturer-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .lecturer-columns { grid-template-columns: 1fr; gap: 1.25rem; }
+}
+
+.queue-section h2,
+.answered-section h2 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.queue-section h2::after,
+.answered-section h2::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Subtle left border accent on queue column */
+.queue-section {
+  border-left: 2px solid rgba(99,102,241,0.2);
+  padding-left: 1rem;
+}
+.answered-section {
+  border-left: 2px solid rgba(34,197,94,0.2);
+  padding-left: 1rem;
+}
+
+@media (max-width: 600px) {
+  .lecturer-main { padding: 1.25rem 0.75rem; }
+  .queue-section, .answered-section { border-left: none; padding-left: 0; }
+}
+/* ── Speech Panel (Phase 6 Enhancement) ── */
+.speech-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.speech-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 0.85rem;
+}
+
+.speech-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.speech-icon { font-size: 1.1rem; }
+
+.speech-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.speech-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.speech-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f87171;
+  display: inline-block;
+  animation: pulse 1.2s infinite;
+}
+
+.speech-status {
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.speech-status.active {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.speech-status.off {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+/* Currently highlighted question reference */
+.speech-question-ref {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(234, 179, 8, 0.06);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 7px 11px;
+  margin-bottom: 0.85rem;
+  font-size: 0.82rem;
+}
+.speech-question-label {
+  color: #eab308;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.speech-question-text {
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* Error */
+.speech-error {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: #f87171;
+  border-radius: var(--radius-sm);
+  padding: 7px 11px;
+  font-size: 0.82rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Transcript box */
+.speech-transcript {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  min-height: 90px;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  margin-bottom: 0.85rem;
+  transition: border-color 0.2s;
+  scroll-behavior: smooth;
+}
+.speech-transcript.listening {
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.08);
+}
+.speech-placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* Controls */
+.speech-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.speech-btn {
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.speech-btn.start {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.speech-btn.start:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.speech-btn.stop {
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+  border-color: transparent;
+  animation: pulse 2s infinite;
+}
+.speech-btn.stop:hover { opacity: 0.85; }
+
+.speech-btn.clear {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+.speech-btn.clear:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+.speech-btn.clear:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Unsupported browser */
+.speech-unsupported {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-secondary);
+}
+.speech-unsupported-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+.speech-unsupported p { font-size: 0.88rem; margin-bottom: 4px; }
+.speech-unsupported-hint {
+  font-size: 0.8rem;
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+.speech-unsupported-hint strong { color: var(--accent-light); }
+
+@media (max-width: 600px) {
+  .speech-transcript { min-height: 70px; max-height: 130px; }
+  .speech-header { flex-direction: column; align-items: flex-start; }
+}
