@@ -585,4 +585,21 @@ body {
   cursor: not-allowed;
 }
 
+/* Reaction undo indicator */
+.reaction-undo {
+  font-size: 0.65rem;
+  margin-left: 3px;
+  opacity: 0.6;
+}
 
+.reaction-btn.reacted {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: var(--accent-light);
+}
+
+.reaction-btn.reacted:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #f87171;
+}

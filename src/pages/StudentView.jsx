@@ -1,76 +1,60 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import QuestionForm from "../components/QuestionForm";
-import QuestionCard from "../components/QuestionCard";
-import LiveStats from "../components/LiveStats";
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import QuestionForm from '../components/QuestionForm'
+import QuestionCard from '../components/QuestionCard'
+import LiveStats from '../components/LiveStats'
 import {
   subscribeToQuestions,
   subscribeToSession,
   updateStudentCount,
-} from "../firebase/firestore";
-import "../styles/student.css";
+} from '../firebase/firestore'
+import '../styles/student.css'
 
 function SkeletonCard() {
-  return <div className="skeleton-card" />;
+  return <div className="skeleton-card" />
 }
 
 export default function StudentView() {
-  const { sessionId } = useParams();
+  const { sessionId } = useParams()
+  const [questions, setQuestions]     = useState([])
+  const [sessionData, setSessionData] = useState({ studentCount: 0, questionCount: 0 })
+  const [loading, setLoading]         = useState(true)
 
-  const [questions, setQuestions] = useState([]);
-  const [sessionData, setSessionData] = useState({
-    studentCount: 0,
-    questionCount: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  // ✅ student tracking
   useEffect(() => {
-    if (!sessionId) return;
+    // Use sessionStorage to track if this tab already counted
+    // sessionStorage clears when tab is closed but persists on reload
+    const countKey = `joined_${sessionId}`
+    const alreadyCounted = sessionStorage.getItem(countKey)
 
-    updateStudentCount(sessionId, 1);
+    if (!alreadyCounted) {
+      // First time this tab joins — increment
+      updateStudentCount(sessionId, 1)
+      sessionStorage.setItem(countKey, '1')
+    }
 
+    // Decrement when tab is actually closed (not on reload)
+    const handleUnload = () => {
+      // Only decrement if this tab was counted
+      if (sessionStorage.getItem(countKey)) {
+        updateStudentCount(sessionId, -1)
+        sessionStorage.removeItem(countKey)
+      }
+    }
+
+    window.addEventListener('beforeunload', handleUnload)
     return () => {
-      updateStudentCount(sessionId, -1);
-    };
-  }, [sessionId]);
+      window.removeEventListener('beforeunload', handleUnload)
+    }
+  }, [sessionId])
 
-  // ✅ realtime listeners
   useEffect(() => {
-    if (!sessionId) return;
-
     const unsubQ = subscribeToQuestions(sessionId, (qs) => {
-      setQuestions(qs);
-      setLoading(false);
-    });
-
-    const unsubS = subscribeToSession(sessionId, (data) => {
-      setSessionData({
-        studentCount: data?.studentCount ?? 0,
-        questionCount: data?.questionCount ?? 0,
-      });
-    });
-
-    return () => {
-      if (typeof unsubQ === "function") unsubQ();
-      if (typeof unsubS === "function") unsubS();
-    };
-  }, [sessionId]);
-
-  // 🔥 SORTED QUESTIONS (NEW FEATURE)
-  const sortedQuestions = [...questions].sort((a, b) => {
-    const aScore =
-      (a.reactions?.heart || 0) +
-      (a.reactions?.fire || 0) * 2 +
-      (a.reactions?.thumbs || 0);
-
-    const bScore =
-      (b.reactions?.heart || 0) +
-      (b.reactions?.fire || 0) * 2 +
-      (b.reactions?.thumbs || 0);
-
-    return bScore - aScore;
-  });
+      setQuestions(qs)
+      setLoading(false)
+    })
+    const unsubS = subscribeToSession(sessionId, setSessionData)
+    return () => { unsubQ(); unsubS() }
+  }, [sessionId])
 
   return (
     <div className="student-page">
@@ -79,20 +63,17 @@ export default function StudentView() {
           <span className="logo-sm">🪺</span>
           <div>
             <h1>QueryNest</h1>
-            <span className="session-badge">
-              Session: {sessionId}
-            </span>
+            <span className="session-badge">Session: {sessionId}</span>
           </div>
         </div>
-
         <LiveStats
-          studentCount={sessionData.studentCount}
-          questionCount={sessionData.questionCount}
+          studentCount={sessionData.studentCount ?? 0}
+          questionCount={sessionData.questionCount ?? 0}
         />
       </header>
 
       <main className="student-main">
-        {sessionId && <QuestionForm sessionId={sessionId} />}
+        <QuestionForm sessionId={sessionId} />
 
         <section className="questions-section">
           <h2>Live Questions</h2>
@@ -104,12 +85,10 @@ export default function StudentView() {
               <SkeletonCard />
             </>
           ) : questions.length === 0 ? (
-            <p className="empty-state">
-              No questions yet — be the first to ask! 🙋
-            </p>
+            <p className="empty-state">No questions yet — be the first to ask! 🙋</p>
           ) : (
             <div className="questions-list">
-              {sortedQuestions.map((q) => (
+              {questions.map(q => (
                 <QuestionCard
                   key={q.id}
                   question={q}
@@ -122,5 +101,5 @@ export default function StudentView() {
         </section>
       </main>
     </div>
-  );
+  )
 }

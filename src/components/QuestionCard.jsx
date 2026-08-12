@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { addReaction } from '../firebase/firestore'
+import { useState, useEffect } from 'react'
+import { addReaction, removeReaction } from '../firebase/firestore'
 
 export default function QuestionCard({
   question,
@@ -11,7 +11,7 @@ export default function QuestionCard({
   const { id, text, reactions, answered, highlighted, liveTranscript, isAnswering } = question
 
   const [reacted, setReacted] = useState({ heart: false, fire: false, thumbs: false })
-  const transcriptRef = useRef(null)
+  const transcriptRef = useRef ? useRef(null) : { current: null }
 
   useEffect(() => {
     setReacted({
@@ -21,18 +21,22 @@ export default function QuestionCard({
     })
   }, [id])
 
-  // Auto-scroll live transcript on student side
-  useEffect(() => {
-    if (transcriptRef.current) {
-      transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight
-    }
-  }, [liveTranscript])
-
   async function handleReaction(type) {
-    if (!isStudent || reacted[type] || answered) return
-    localStorage.setItem(`reacted_${id}_${type}`, '1')
-    setReacted(prev => ({ ...prev, [type]: true }))
-    await addReaction(sessionId, id, type)
+    if (!isStudent || answered) return
+
+    const alreadyReacted = reacted[type]
+
+    if (alreadyReacted) {
+      // Unlike — remove reaction
+      localStorage.removeItem(`reacted_${id}_${type}`)
+      setReacted(prev => ({ ...prev, [type]: false }))
+      await removeReaction(sessionId, id, type)
+    } else {
+      // Like — add reaction
+      localStorage.setItem(`reacted_${id}_${type}`, '1')
+      setReacted(prev => ({ ...prev, [type]: true }))
+      await addReaction(sessionId, id, type)
+    }
   }
 
   const REACTIONS = [
@@ -49,7 +53,7 @@ export default function QuestionCard({
 
       <p className="question-text">{text}</p>
 
-      {/* ── Live answering indicator (students see this) ── */}
+      {/* Live answering indicator */}
       {isAnswering && isStudent && (
         <div className="live-answer-indicator">
           <span className="live-answer-dot" />
@@ -57,21 +61,18 @@ export default function QuestionCard({
         </div>
       )}
 
-      {/* ── Live transcript while answering ── */}
+      {/* Live transcript */}
       {isAnswering && liveTranscript && (
-        <div
-          className="live-transcript-box"
-          ref={transcriptRef}
-        >
+        <div className="live-transcript-box">
           <span className="live-transcript-label">Live answer:</span>
           <p className="live-transcript-text">{liveTranscript}</p>
         </div>
       )}
 
-      {/* ── Final answer (after marked answered) ── */}
+      {/* Final answer */}
       {answered && liveTranscript && (
         <div className="final-answer-box">
-          <span className="final-answer-label">📝 Lecturer's answer:</span>
+          <span className="final-answer-label">📝 Lecturer answer:</span>
           <p className="final-answer-text">{liveTranscript}</p>
         </div>
       )}
@@ -84,10 +85,11 @@ export default function QuestionCard({
                 key={type}
                 className={`reaction-btn ${reacted[type] ? 'reacted' : ''}`}
                 onClick={() => handleReaction(type)}
-                disabled={reacted[type] || answered}
-                title={reacted[type] ? 'Already reacted' : `React with ${emoji}`}
+                disabled={answered}
+                title={reacted[type] ? `Remove ${emoji}` : `React with ${emoji}`}
               >
                 {emoji} <span className="reaction-count">{count}</span>
+                {reacted[type] && <span className="reaction-undo">✕</span>}
               </button>
             ) : (
               <span key={type} className="reaction">{emoji} {count}</span>

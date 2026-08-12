@@ -159,6 +159,14 @@ export async function updateLiveTranscript(sessionId, questionId, transcript) {
     isAnswering: true,
   })
 }
+/**
+ * Remove a reaction from a question (unlike/undislike).
+ * type is one of: 'heart' | 'fire' | 'thumbs'
+ */
+export async function removeReaction(sessionId, questionId, type) {
+  const ref = doc(db, 'sessions', sessionId, 'questions', questionId)
+  await updateDoc(ref, { [`reactions.${type}`]: increment(-1) })
+}
 
 /**
  * Finish the answer — save final transcript, mark answered,
