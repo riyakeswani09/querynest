@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
-import { addReaction, removeReaction } from '../firebase/firestore'
+import {
+  addReaction,
+  removeReaction,
+} from '../firebase/firestore'
 
 export default function QuestionCard({
   question,
@@ -8,50 +11,144 @@ export default function QuestionCard({
   onMarkAnswered,
   onToggleHighlight,
 }) {
-  const { id, text, reactions, answered, highlighted, liveTranscript, isAnswering } = question
+  const {
+    id,
+    text,
+    reactions,
+    answered,
+    highlighted,
+    liveTranscript,
+    isAnswering,
+  } = question
 
-  const [reacted, setReacted] = useState({ heart: false, fire: false, thumbs: false })
-  const transcriptRef = useRef ? useRef(null) : { current: null }
+  const [reacted, setReacted] = useState({
+    heart: false,
+    fire: false,
+    thumbs: false,
+  })
 
+  // Check which reactions this student has already made
   useEffect(() => {
     setReacted({
-      heart:  !!localStorage.getItem(`reacted_${id}_heart`),
-      fire:   !!localStorage.getItem(`reacted_${id}_fire`),
+      heart: !!localStorage.getItem(`reacted_${id}_heart`),
+      fire: !!localStorage.getItem(`reacted_${id}_fire`),
       thumbs: !!localStorage.getItem(`reacted_${id}_thumbs`),
     })
   }, [id])
 
+  // ---------------- REACTIONS ----------------
+
   async function handleReaction(type) {
-    if (!isStudent || answered) return
+    // Students are allowed to react whether the question
+    // is answered or unanswered.
+    if (!isStudent) return
 
     const alreadyReacted = reacted[type]
+    const storageKey = `reacted_${id}_${type}`
 
-    if (alreadyReacted) {
-      // Unlike — remove reaction
-      localStorage.removeItem(`reacted_${id}_${type}`)
-      setReacted(prev => ({ ...prev, [type]: false }))
-      await removeReaction(sessionId, id, type)
-    } else {
-      // Like — add reaction
-      localStorage.setItem(`reacted_${id}_${type}`, '1')
-      setReacted(prev => ({ ...prev, [type]: true }))
-      await addReaction(sessionId, id, type)
+    try {
+      if (alreadyReacted) {
+        // ---------------- REMOVE REACTION ----------------
+
+        localStorage.removeItem(storageKey)
+
+        setReacted((prev) => ({
+          ...prev,
+          [type]: false,
+        }))
+
+        await removeReaction(
+          sessionId,
+          id,
+          type
+        )
+      } else {
+        // ---------------- ADD REACTION ----------------
+
+        localStorage.setItem(storageKey, '1')
+
+        setReacted((prev) => ({
+          ...prev,
+          [type]: true,
+        }))
+
+        await addReaction(
+          sessionId,
+          id,
+          type
+        )
+      }
+    } catch (error) {
+      console.error('Reaction error:', error)
+
+      // Roll back local state if Firebase fails
+      if (alreadyReacted) {
+        localStorage.setItem(
+          storageKey,
+          '1'
+        )
+      } else {
+        localStorage.removeItem(
+          storageKey
+        )
+      }
+
+      setReacted((prev) => ({
+        ...prev,
+        [type]: alreadyReacted,
+      }))
     }
   }
 
+  // ---------------- REACTION DATA ----------------
+
   const REACTIONS = [
-    { type: 'heart',  emoji: '❤️', count: reactions?.heart  ?? 0 },
-    { type: 'fire',   emoji: '🔥', count: reactions?.fire   ?? 0 },
-    { type: 'thumbs', emoji: '👍', count: reactions?.thumbs ?? 0 },
+    {
+      type: 'heart',
+      emoji: '❤️',
+      count: reactions?.heart ?? 0,
+    },
+    {
+      type: 'fire',
+      emoji: '🔥',
+      count: reactions?.fire ?? 0,
+    },
+    {
+      type: 'thumbs',
+      emoji: '👍',
+      count: reactions?.thumbs ?? 0,
+    },
   ]
 
+  // ---------------- UI ----------------
+
   return (
-    <div className={`question-card ${answered ? 'answered' : ''} ${highlighted ? 'highlighted' : ''}`}>
+    <div
+      className={`question-card ${
+        answered ? 'answered' : ''
+      } ${
+        highlighted ? 'highlighted' : ''
+      }`}
+    >
 
-      {highlighted && !answered && <span className="highlighted-tag">⭐ Current Question</span>}
-      {answered && <span className="answered-tag">✓ Answered</span>}
+      {/* Highlighted label */}
+      {highlighted && !answered && (
+        <span className="highlighted-tag">
+          ⭐ Current Question
+        </span>
+      )}
 
-      <p className="question-text">{text}</p>
+      {/* Answered label */}
+      {answered && (
+        <span className="answered-tag">
+          ✓ Answered
+        </span>
+      )}
+
+      {/* Question */}
+      <p className="question-text">
+        {text}
+      </p>
 
       {/* Live answering indicator */}
       {isAnswering && isStudent && (
@@ -64,55 +161,127 @@ export default function QuestionCard({
       {/* Live transcript */}
       {isAnswering && liveTranscript && (
         <div className="live-transcript-box">
-          <span className="live-transcript-label">Live answer:</span>
-          <p className="live-transcript-text">{liveTranscript}</p>
+          <span className="live-transcript-label">
+            Live answer:
+          </span>
+
+          <p className="live-transcript-text">
+            {liveTranscript}
+          </p>
         </div>
       )}
 
       {/* Final answer */}
       {answered && liveTranscript && (
         <div className="final-answer-box">
-          <span className="final-answer-label">📝 Lecturer answer:</span>
-          <p className="final-answer-text">{liveTranscript}</p>
+          <span className="final-answer-label">
+            📝 Lecturer answer:
+          </span>
+
+          <p className="final-answer-text">
+            {liveTranscript}
+          </p>
         </div>
       )}
 
+      {/* Footer */}
       <div className="question-footer">
+
+        {/* ---------------- REACTIONS ---------------- */}
+
         <div className="reactions">
-          {REACTIONS.map(({ type, emoji, count }) =>
-            isStudent ? (
-              <button
-                key={type}
-                className={`reaction-btn ${reacted[type] ? 'reacted' : ''}`}
-                onClick={() => handleReaction(type)}
-                disabled={answered}
-                title={reacted[type] ? `Remove ${emoji}` : `React with ${emoji}`}
-              >
-                {emoji} <span className="reaction-count">{count}</span>
-                {reacted[type] && <span className="reaction-undo">✕</span>}
-              </button>
-            ) : (
-              <span key={type} className="reaction">{emoji} {count}</span>
-            )
+
+          {REACTIONS.map(
+            ({ type, emoji, count }) =>
+              isStudent ? (
+
+                <button
+                  key={type}
+                  type="button"
+                  className={`reaction-btn ${
+                    reacted[type]
+                      ? 'reacted'
+                      : ''
+                  }`}
+                  onClick={() =>
+                    handleReaction(type)
+                  }
+                  title={
+                    reacted[type]
+                      ? `Remove ${emoji} reaction`
+                      : `React with ${emoji}`
+                  }
+                >
+                  {emoji}
+
+                  <span className="reaction-count">
+                    {count}
+                  </span>
+
+                  {/* Show X when student has reacted */}
+                  {reacted[type] && (
+                    <span className="reaction-undo">
+                      ✕
+                    </span>
+                  )}
+                </button>
+
+              ) : (
+
+                // Lecturer sees reaction counts only
+                <span
+                  key={type}
+                  className="reaction"
+                >
+                  {emoji} {count}
+                </span>
+
+              )
           )}
+
         </div>
+
+        {/* ---------------- LECTURER CONTROLS ---------------- */}
 
         {!isStudent && !answered && (
           <div className="lecturer-actions">
+
+            {/* Highlight */}
             <button
-              className={`highlight-btn ${highlighted ? 'active' : ''}`}
-              onClick={() => onToggleHighlight && onToggleHighlight(id, highlighted)}
+              type="button"
+              className={`highlight-btn ${
+                highlighted
+                  ? 'active'
+                  : ''
+              }`}
+              onClick={() =>
+                onToggleHighlight &&
+                onToggleHighlight(
+                  id,
+                  highlighted
+                )
+              }
             >
-              {highlighted ? '★ Highlighted' : '☆ Highlight'}
+              {highlighted
+                ? '★ Highlighted'
+                : '☆ Highlight'}
             </button>
+
+            {/* Mark answered */}
             <button
+              type="button"
               className="mark-answered-btn"
-              onClick={() => onMarkAnswered && onMarkAnswered(id)}
+              onClick={() =>
+                onMarkAnswered &&
+                onMarkAnswered(id)
+              }
             >
               ✓ Answered
             </button>
+
           </div>
         )}
+
       </div>
     </div>
   )

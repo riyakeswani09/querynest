@@ -5,10 +5,10 @@ import {
   setDoc,
   updateDoc,
   onSnapshot,
-  serverTimestamp,
-  increment,
   query,
   orderBy,
+  serverTimestamp,
+  increment,
 } from "firebase/firestore";
 
 import { db } from "./config";
@@ -46,7 +46,7 @@ export async function submitQuestion(sessionId, text) {
   try {
     const sessionRef = doc(db, "sessions", sessionId);
 
-    // Only ensure session exists (DO NOT reset counters)
+    // Make sure the session exists without resetting counters
     await setDoc(
       sessionRef,
       {
@@ -65,7 +65,7 @@ export async function submitQuestion(sessionId, text) {
 
     await addDoc(questionsRef, {
       text,
-      createdAt: serverTimestamp(), // FIXED (important)
+      createdAt: serverTimestamp(),
       answered: false,
       highlighted: false,
       reactions: {
@@ -78,7 +78,6 @@ export async function submitQuestion(sessionId, text) {
     await updateDoc(sessionRef, {
       questionCount: increment(1),
     });
-
   } catch (err) {
     console.error("submitQuestion failed:", err);
     throw err;
@@ -91,13 +90,20 @@ export function subscribeToSession(sessionId, callback) {
   const ref = doc(db, "sessions", sessionId);
 
   return onSnapshot(ref, (snap) => {
-    if (snap.exists()) callback(snap.data());
+    if (snap.exists()) {
+      callback(snap.data());
+    }
   });
 }
 
 export function subscribeToQuestions(sessionId, callback) {
   const q = query(
-    collection(db, "sessions", sessionId, "questions"),
+    collection(
+      db,
+      "sessions",
+      sessionId,
+      "questions"
+    ),
     orderBy("createdAt", "asc")
   );
 
@@ -114,7 +120,13 @@ export function subscribeToQuestions(sessionId, callback) {
 /* ---------------- LECTURER ---------------- */
 
 export async function markAnswered(sessionId, questionId) {
-  const ref = doc(db, "sessions", sessionId, "questions", questionId);
+  const ref = doc(
+    db,
+    "sessions",
+    sessionId,
+    "questions",
+    questionId
+  );
 
   await updateDoc(ref, {
     answered: true,
@@ -122,8 +134,18 @@ export async function markAnswered(sessionId, questionId) {
   });
 }
 
-export async function toggleHighlight(sessionId, questionId, current) {
-  const ref = doc(db, "sessions", sessionId, "questions", questionId);
+export async function toggleHighlight(
+  sessionId,
+  questionId,
+  current
+) {
+  const ref = doc(
+    db,
+    "sessions",
+    sessionId,
+    "questions",
+    questionId
+  );
 
   await updateDoc(ref, {
     highlighted: !current,
@@ -132,55 +154,92 @@ export async function toggleHighlight(sessionId, questionId, current) {
 
 /* ---------------- REACTIONS ---------------- */
 
-export async function addReaction(sessionId, questionId, type) {
-  const ref = doc(db, "sessions", sessionId, "questions", questionId);
-
-  await setDoc(ref, {
-    reactions: {
-      heart: 0,
-      fire: 0,
-      thumbs: 0,
-    },
-  }, { merge: true });
+export async function addReaction(
+  sessionId,
+  questionId,
+  type
+) {
+  const ref = doc(
+    db,
+    "sessions",
+    sessionId,
+    "questions",
+    questionId
+  );
 
   await updateDoc(ref, {
     [`reactions.${type}`]: increment(1),
   });
 }
 
-/**
- * Update the live transcript while lecturer is speaking.
- * Called every few seconds as speech recognition fires.
- */
-export async function updateLiveTranscript(sessionId, questionId, transcript) {
-  const ref = doc(db, 'sessions', sessionId, 'questions', questionId)
+export async function removeReaction(
+  sessionId,
+  questionId,
+  type
+) {
+  const ref = doc(
+    db,
+    "sessions",
+    sessionId,
+    "questions",
+    questionId
+  );
+
+  await updateDoc(ref, {
+    [`reactions.${type}`]: increment(-1),
+  });
+}
+
+/* ---------------- LIVE TRANSCRIPT ---------------- */
+
+export async function updateLiveTranscript(
+  sessionId,
+  questionId,
+  transcript
+) {
+  const ref = doc(
+    db,
+    "sessions",
+    sessionId,
+    "questions",
+    questionId
+  );
+
   await updateDoc(ref, {
     liveTranscript: transcript,
     isAnswering: true,
-  })
-}
-/**
- * Remove a reaction from a question (unlike/undislike).
- * type is one of: 'heart' | 'fire' | 'thumbs'
- */
-export async function removeReaction(sessionId, questionId, type) {
-  const ref = doc(db, 'sessions', sessionId, 'questions', questionId)
-  await updateDoc(ref, { [`reactions.${type}`]: increment(-1) })
+  });
 }
 
-/**
- * Finish the answer — save final transcript, mark answered,
- * clear the live answering state.
- */
-export async function saveAnswer(sessionId, questionId, finalTranscript) {
-  const ref = doc(db, 'sessions', sessionId, 'questions', questionId)
+/* ---------------- SAVE ANSWER ---------------- */
+
+export async function saveAnswer(
+  sessionId,
+  questionId,
+  finalTranscript
+) {
+  const ref = doc(
+    db,
+    "sessions",
+    sessionId,
+    "questions",
+    questionId
+  );
+
   await updateDoc(ref, {
     liveTranscript: finalTranscript,
     isAnswering: false,
     answered: true,
     highlighted: false,
-  })
-  // Decrement questionCount since it moved to answered
-  const sessionRef = doc(db, 'sessions', sessionId)
-  await updateDoc(sessionRef, { questionCount: increment(-1) })
+  });
+
+  const sessionRef = doc(
+    db,
+    "sessions",
+    sessionId
+  );
+
+  await updateDoc(sessionRef, {
+    questionCount: increment(-1),
+  });
 }

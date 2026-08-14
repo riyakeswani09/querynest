@@ -112,3 +112,37 @@
   opacity: 0.6;
   border-color: rgba(0, 255, 170, 0.2);
 }
+/* ================================
+   CENTER SESSION ID
+   ================================ */
+
+.student-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+}
+
+.session-display {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.session-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  opacity: 0.7;
+  margin-bottom: 3px;
+}
+
+.session-display strong {
+  display: block;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}

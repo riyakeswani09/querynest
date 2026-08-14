@@ -603,3 +603,51 @@ body {
   border-color: rgba(239, 68, 68, 0.35);
   color: #f87171;
 }
+.top-reactions {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 24px;
+  padding: 18px 22px;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+.top-reactions-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.top-reactions-list {
+  display: flex;
+  gap: 16px;
+}
+
+.top-reaction-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #f8f8f8;
+}
+
+.top-reaction-emoji {
+  font-size: 28px;
+}
+
+.top-reaction-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.top-reaction-label {
+  font-size: 13px;
+  color: #777;
+}
+
+.top-reaction-count {
+  font-size: 22px;
+}
