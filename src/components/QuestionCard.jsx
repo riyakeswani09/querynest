@@ -151,16 +151,16 @@ export default function QuestionCard({
       </p>
 
       {/* Live answering indicator */}
-      {isAnswering && isStudent && (
-        <div className="live-answer-indicator">
-          <span className="live-answer-dot" />
-          🎤 Lecturer is answering...
-        </div>
-      )}
+      {isAnswering && !answered && isStudent && (
+  <div className="live-answer-indicator">
+    <span className="live-answer-dot" />
+    🎤 Lecturer is answering...
+  </div>
+)}
 
       {/* Live transcript */}
-      {isAnswering && liveTranscript && (
-        <div className="live-transcript-box">
+      {isAnswering && !answered && liveTranscript && (
+  <div className="live-transcript-box">
           <span className="live-transcript-label">
             Live answer:
           </span>
